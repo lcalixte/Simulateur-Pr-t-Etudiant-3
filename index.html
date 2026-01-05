@@ -1,349 +1,329 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  TrendingUp, 
-  Calendar, 
-  Euro, 
-  Percent, 
-  GraduationCap, 
-  Wallet, 
-  Briefcase,
-  ChevronRight,
-  Info,
-  Clock,
-  Target,
-  History
-} from 'lucide-react';
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulateur de remboursement prêt étudiant</title>
+    <!-- Chargement de Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chargement de React et ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Chargement de Babel pour compiler le JSX dans le navigateur -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Chargement de Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #10b981;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body class="bg-[#0a0e14] text-slate-200">
+    <div id="root"></div>
 
-const App = () => {
-  // --- État Civil du Prêt ---
-  const [capital, setCapital] = useState(45000);
-  const [taux, setTaux] = useState(2.80);
-  const [dureeTotale, setDureeTotale] = useState(120); // Durée totale en mois
-  const [dateObtention, setDateObtention] = useState(new Date().toISOString().split('T')[0]);
+    <script type="text/babel">
+        const { useState, useEffect } = React;
 
-  // --- Remboursement pendant les études ---
-  const [isPendantEtudes, setIsPendantEtudes] = useState(false);
-  const [dateDebutRemboursement, setDateDebutRemboursement] = useState(new Date().toISOString().split('T')[0]);
+        // Composant Icon simple pour remplacer lucide-react dans ce contexte HTML
+        const Icon = ({ name, className }) => {
+            useEffect(() => {
+                lucide.createIcons();
+            }, [name]);
+            return <i data-lucide={name} className={className}></i>;
+        };
 
-  // --- État Diplomation (Différé) ---
-  const [isDiffere, setIsDiffere] = useState(false);
-  const [anneesEtudes, setAnneesEtudes] = useState(2);
+        const App = () => {
+            // --- État Civil du Prêt ---
+            const [capital, setCapital] = useState(45000);
+            const [taux, setTaux] = useState(2.80);
+            const [dureeTotale, setDureeTotale] = useState(120);
+            const [dateObtention, setDateObtention] = useState(new Date().toISOString().split('T')[0]);
 
-  // --- État Carrière ---
-  const [salMin, setSalMin] = useState(32000);
-  const [salMax, setSalMax] = useState(45000);
-  const [ratioEffort, setRatioEffort] = useState(20); // % du salaire
+            // --- Remboursement pendant les études ---
+            const [isPendantEtudes, setIsPendantEtudes] = useState(false);
+            const [dateDebutRemboursement, setDateDebutRemboursement] = useState(new Date().toISOString().split('T')[0]);
 
-  // --- Calculs ---
-  const [resultats, setResultats] = useState({ 
-    mensualite: 0, 
-    total: 0, 
-    capaciteMin: 0, 
-    capaciteMax: 0,
-    annees100: 0,
-    anneesRatio: 0
-  });
+            // --- État Diplomation (Différé) ---
+            const [isDiffere, setIsDiffere] = useState(false);
+            const [anneesEtudes, setAnneesEtudes] = useState(2);
 
-  useEffect(() => {
-    const i = (taux / 100) / 12;
-    const n = isDiffere ? (dureeTotale - (anneesEtudes * 12)) : dureeTotale;
-    
-    // Capital après période de différé (intérêts capitalisés)
-    let capitalFinal = capital;
-    if (isDiffere) {
-      capitalFinal = capital * Math.pow(1 + i, anneesEtudes * 12);
-    }
+            // --- État Carrière ---
+            const [salMin, setSalMin] = useState(32000);
+            const [salMax, setSalMax] = useState(45000);
+            const [ratioEffort, setRatioEffort] = useState(20);
 
-    let m = 0;
-    if (i > 0 && n > 0) {
-      m = (capitalFinal * i) / (1 - Math.pow(1 + i, -n));
-    }
+            // --- Calculs ---
+            const [resultats, setResultats] = useState({ 
+                mensualite: 0, 
+                total: 0, 
+                capaciteMin: 0, 
+                capaciteMax: 0,
+                annees100: 0,
+                anneesRatio: 0
+            });
 
-    // Calcul de la fourchette de capacité basée sur le ratio d'effort
-    const capMin = (salMin / 12) * (ratioEffort / 100);
-    const capMax = (salMax / 12) * (ratioEffort / 100);
-    
-    // Coût en années de salaire intégral
-    const totalDette = m * n;
-    const salaireMoyenAnnuel = (salMin + salMax) / 2;
-    
-    const effort100 = salaireMoyenAnnuel > 0 ? (totalDette / salaireMoyenAnnuel) : 0;
-    // Coût en années selon le ratio d'effort choisi (ex: si on donne 20%, ça prend 5x plus de temps)
-    const effortRatio = (ratioEffort > 0) ? (effort100 / (ratioEffort / 100)) : 0;
+            useEffect(() => {
+                const i = (taux / 100) / 12;
+                const n = isDiffere ? (dureeTotale - (anneesEtudes * 12)) : dureeTotale;
+                
+                let capitalFinal = capital;
+                if (isDiffere) {
+                    capitalFinal = capital * Math.pow(1 + i, anneesEtudes * 12);
+                }
 
-    setResultats({
-      mensualite: m,
-      total: totalDette,
-      capaciteMin: capMin,
-      capaciteMax: capMax,
-      annees100: effort100,
-      anneesRatio: effortRatio
-    });
-  }, [capital, taux, dureeTotale, isDiffere, anneesEtudes, salMin, salMax, ratioEffort]);
+                let m = 0;
+                if (i > 0 && n > 0) {
+                    m = (capitalFinal * i) / (1 - Math.pow(1 + i, -n));
+                }
 
-  const formatEuro = (val) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(val);
+                const capMin = (salMin / 12) * (ratioEffort / 100);
+                const capMax = (salMax / 12) * (ratioEffort / 100);
+                
+                const totalDette = m * n;
+                const salaireMoyenAnnuel = (salMin + salMax) / 2;
+                
+                const effort100 = salaireMoyenAnnuel > 0 ? (totalDette / salaireMoyenAnnuel) : 0;
+                const effortRatio = (ratioEffort > 0) ? (effort100 / (ratioEffort / 100)) : 0;
 
-  return (
-    <div className="min-h-screen bg-[#0a0e14] text-slate-200 font-sans p-4 md:p-8 flex items-center justify-center">
-      <div className="w-full max-w-6xl bg-[#111827] border border-slate-800 rounded-lg shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col md:flex-row">
-        
-        {/* PANNEAU DE CONFIGURATION (GAUCHE) */}
-        <div className="w-full md:w-3/5 p-8 space-y-8 border-r border-slate-800">
-          <header className="flex items-center gap-4 mb-10">
-            <div className="bg-emerald-500 p-2 rounded">
-              <TrendingUp className="text-[#0a0e14] w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-xl font-black uppercase tracking-tighter text-white leading-tight">Simulateur de remboursement prêt étudiant</h1>
-              <p className="text-[10px] uppercase tracking-[0.12em] text-slate-500 font-bold italic text-pretty">Combien d'années de salaire pour rembourser votre prêt étudiant ?</p>
-            </div>
-          </header>
+                setResultats({
+                    mensualite: m,
+                    total: totalDette,
+                    capaciteMin: capMin,
+                    capaciteMax: capMax,
+                    annees100: effort100,
+                    anneesRatio: effortRatio
+                });
+            }, [capital, taux, dureeTotale, isDiffere, anneesEtudes, salMin, salMax, ratioEffort]);
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-6">
-              <div className="group">
-                <label className="text-[11px] uppercase tracking-widest text-slate-400 font-bold mb-2 block">Capital emprunté</label>
-                <div className="relative">
-                  <Euro className="absolute left-0 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-500" />
-                  <input 
-                    type="number"
-                    value={capital}
-                    onFocus={(e) => e.target.select()}
-                    onChange={(e) => setCapital(Number(e.target.value))}
-                    className="w-full bg-transparent border-b-2 border-slate-700 py-3 pl-8 text-2xl font-bold text-white focus:border-emerald-500 outline-none transition-colors"
-                  />
+            const formatEuro = (val) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(val);
+
+            return (
+                <div className="min-h-screen p-4 md:p-8 flex items-center justify-center">
+                    <div className="w-full max-w-6xl bg-[#111827] border border-slate-800 rounded-lg shadow-2xl overflow-hidden flex flex-col md:row">
+                        <div className="flex flex-col md:flex-row w-full">
+                            
+                            {/* PANNEAU GAUCHE */}
+                            <div className="w-full md:w-3/5 p-8 space-y-8 border-r border-slate-800">
+                                <header className="flex items-center gap-4 mb-10">
+                                    <div className="bg-emerald-500 p-2 rounded">
+                                        <Icon name="trending-up" className="text-[#0a0e14] w-6 h-6" />
+                                    </div>
+                                    <div>
+                                        <h1 className="text-xl font-black uppercase tracking-tighter text-white leading-tight">Simulateur de remboursement prêt étudiant</h1>
+                                        <p className="text-[10px] uppercase tracking-[0.12em] text-slate-500 font-bold italic">Combien d'années de salaire pour rembourser votre prêt étudiant ?</p>
+                                    </div>
+                                </header>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="space-y-6">
+                                        <div className="group">
+                                            <label className="text-[11px] uppercase tracking-widest text-slate-400 font-bold mb-2 block">Capital emprunté</label>
+                                            <div className="relative">
+                                                <Icon name="euro" className="absolute left-0 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-500" />
+                                                <input 
+                                                    type="number"
+                                                    value={capital}
+                                                    onFocus={(e) => e.target.select()}
+                                                    onChange={(e) => setCapital(Number(e.target.value))}
+                                                    className="w-full bg-transparent border-b-2 border-slate-700 py-3 pl-8 text-2xl font-bold text-white focus:border-emerald-500 outline-none transition-colors"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="group">
+                                            <label className="text-[11px] uppercase tracking-widest text-slate-400 font-bold mb-2 block">Date d'obtention</label>
+                                            <div className="relative">
+                                                <Icon name="calendar" className="absolute left-0 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                                                <input 
+                                                    type="date"
+                                                    value={dateObtention}
+                                                    onChange={(e) => setDateObtention(e.target.value)}
+                                                    className="w-full bg-transparent border-b-2 border-slate-700 py-3 pl-8 text-lg font-bold text-white focus:border-emerald-500 outline-none transition-colors"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-6">
+                                        <div>
+                                            <label className="text-[11px] uppercase tracking-widest text-slate-400 font-bold mb-2 block">Taux TEG (%)</label>
+                                            <div className="relative">
+                                                <Icon name="percent" className="absolute left-0 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-500" />
+                                                <input 
+                                                    type="number"
+                                                    step="0.1"
+                                                    value={taux}
+                                                    onFocus={(e) => e.target.select()}
+                                                    onChange={(e) => setTaux(Number(e.target.value))}
+                                                    className="w-full bg-transparent border-b-2 border-slate-700 py-3 pl-8 text-2xl font-bold text-white focus:border-emerald-500 outline-none transition-colors"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="text-[11px] uppercase tracking-widest text-slate-400 font-bold mb-2 block">Durée totale (mois)</label>
+                                            <div className="relative">
+                                                <Icon name="clock" className="absolute left-0 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                                                <input 
+                                                    type="number"
+                                                    value={dureeTotale}
+                                                    onFocus={(e) => e.target.select()}
+                                                    onChange={(e) => setDureeTotale(Number(e.target.value))}
+                                                    className="w-full bg-transparent border-b-2 border-slate-700 py-3 pl-8 text-2xl font-bold text-white focus:border-emerald-500 outline-none transition-colors"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className="bg-[#1a2234] p-6 rounded-lg border border-slate-700 space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <label className="flex items-center gap-3 cursor-pointer group text-white">
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={isPendantEtudes} 
+                                                    onChange={(e) => {
+                                                        setIsPendantEtudes(e.target.checked);
+                                                        if(e.target.checked) setIsDiffere(false);
+                                                    }}
+                                                    className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-emerald-500"
+                                                />
+                                                <span className="text-sm font-bold uppercase tracking-wide group-hover:text-emerald-400">Remboursement pendant les études</span>
+                                            </label>
+                                            <Icon name="clock" className={isPendantEtudes ? 'text-emerald-500' : 'text-slate-600'} />
+                                        </div>
+                                        {isPendantEtudes && (
+                                            <div className="pt-4 border-t border-slate-700/50">
+                                                <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-2 block">Date de début du remboursement</label>
+                                                <input type="date" value={dateDebutRemboursement} onChange={(e) => setDateDebutRemboursement(e.target.value)} className="w-full bg-transparent border-b border-slate-600 text-white font-bold outline-none" />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="bg-[#1a2234] p-6 rounded-lg border border-slate-700 space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <label className="flex items-center gap-3 cursor-pointer group text-white">
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={isDiffere} 
+                                                    onChange={(e) => {
+                                                        setIsDiffere(e.target.checked);
+                                                        if(e.target.checked) setIsPendantEtudes(false);
+                                                    }}
+                                                    className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-emerald-500"
+                                                />
+                                                <span className="text-sm font-bold uppercase tracking-wide group-hover:text-emerald-400">Remboursement après diplomation</span>
+                                            </label>
+                                            <Icon name="graduation-cap" className={isDiffere ? 'text-emerald-500' : 'text-slate-600'} />
+                                        </div>
+                                        {isDiffere && (
+                                            <div className="pt-4 grid grid-cols-3 gap-2">
+                                                {[1, 2, 3].map(an => (
+                                                    <button key={an} onClick={() => setAnneesEtudes(an)} className={`py-2 rounded text-xs font-bold transition-all ${anneesEtudes === an ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                                                        DANS {an} AN{an > 1 ? 'S' : ''}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="space-y-6 pt-4">
+                                    <h3 className="text-[10px] uppercase tracking-[0.3em] text-emerald-500 font-black">Estimation de la rémunération future</h3>
+                                    <div className="grid grid-cols-2 gap-8">
+                                        <div>
+                                            <label className="text-[11px] uppercase tracking-widest text-slate-400 font-bold mb-2 block text-center">Salaire min envisagé</label>
+                                            <input type="number" value={salMin} onFocus={(e) => e.target.select()} onChange={(e) => setSalMin(Number(e.target.value))} className="w-full bg-slate-800/50 border border-slate-700 p-3 rounded text-center text-lg font-bold text-white outline-none" />
+                                        </div>
+                                        <div>
+                                            <label className="text-[11px] uppercase tracking-widest text-slate-400 font-bold mb-2 block text-center">Salaire max envisagé</label>
+                                            <input type="number" value={salMax} onFocus={(e) => e.target.select()} onChange={(e) => setSalMax(Number(e.target.value))} className="w-full bg-slate-800/50 border border-slate-700 p-3 rounded text-center text-lg font-bold text-white outline-none" />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <label className="text-[11px] uppercase tracking-widest text-slate-400 font-bold leading-relaxed block">
+                                            Quelle part de ton futur salaire estimé comptes-tu consacrer au remboursement mensuel ?
+                                        </label>
+                                        <div className="flex justify-between items-end mb-2">
+                                            <span className="text-[10px] text-slate-500 font-bold uppercase">Effort financier cible</span>
+                                            <span className="text-emerald-500 font-black text-xl">{ratioEffort}%</span>
+                                        </div>
+                                        <input type="range" min="5" max="50" value={ratioEffort} onChange={(e) => setRatioEffort(Number(e.target.value))} className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* PANNEAU DROIT */}
+                            <div className="w-full md:w-2/5 bg-gradient-to-b from-[#1a2234] to-[#111827] p-8 flex flex-col justify-between relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                                    <Icon name="briefcase" className="w-64 h-64 -mr-20 -mt-20" />
+                                </div>
+
+                                <div className="relative z-10 space-y-10">
+                                    <div>
+                                        <p className="text-[10px] uppercase tracking-[0.2em] text-emerald-500 font-bold mb-2">Mensualité fixe (banque)</p>
+                                        <div className="text-6xl font-black text-white tracking-tighter">
+                                            {formatEuro(resultats.mensualite)}
+                                        </div>
+                                        <p className="text-xs text-slate-500 mt-2 font-medium">Échéance mensuelle constante</p>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 gap-4">
+                                        <div className="p-4 bg-white/5 rounded-lg border border-white/5 space-y-2">
+                                            <div className="flex items-center gap-3 text-slate-400">
+                                                <Icon name="wallet" className="w-4 h-4" />
+                                                <span className="text-[10px] uppercase tracking-widest font-bold">Ta capacité de remboursement</span>
+                                            </div>
+                                            <div className="text-xl font-black text-white">
+                                                {formatEuro(resultats.capaciteMin)} <span className="text-slate-500 text-sm font-normal uppercase">à</span> {formatEuro(resultats.capaciteMax)}
+                                            </div>
+                                        </div>
+
+                                        <div className="p-4 border-l-2 border-slate-600 bg-white/5 space-y-2 text-slate-400">
+                                            <div className="flex items-center gap-2">
+                                                <Icon name="target" className="w-4 h-4" />
+                                                <p className="text-[10px] uppercase tracking-widest font-bold leading-tight">Coût en années de travail avec 100% du salaire consacré au remboursement</p>
+                                            </div>
+                                            <p className="text-2xl font-black text-white">{resultats.annees100.toFixed(1)} <span className="text-sm">ans</span></p>
+                                        </div>
+
+                                        <div className="p-4 border-l-2 border-emerald-500 bg-emerald-500/5 space-y-2">
+                                            <div className="flex items-center gap-2 text-emerald-500">
+                                                <Icon name="history" className="w-4 h-4" />
+                                                <p className="text-[10px] uppercase tracking-widest font-bold leading-tight">Coût en années de travail avec {ratioEffort}% du salaire consacré au remboursement</p>
+                                            </div>
+                                            <p className="text-2xl font-black text-white">{resultats.anneesRatio.toFixed(1)} <span className="text-sm">ans</span></p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="relative z-10 pt-8">
+                                    <button className="w-full bg-white text-[#0a0e14] py-4 rounded font-black uppercase tracking-widest text-sm hover:bg-emerald-500 transition-all flex items-center justify-center gap-2 group">
+                                        Voir le tableau complet
+                                        <Icon name="chevron-right" className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                    </button>
+                                    <div className="mt-4 flex items-start gap-3 bg-blue-900/20 p-4 rounded text-[10px] leading-relaxed text-blue-300/80 border border-blue-900/30 italic">
+                                        <Icon name="info" className="w-4 h-4 shrink-0" />
+                                        Note : La mensualité est fixe selon votre contrat bancaire. Votre capacité de remboursement, elle, fluctue selon votre salaire futur.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-              </div>
+            );
+        };
 
-              <div className="group">
-                <label className="text-[11px] uppercase tracking-widest text-slate-400 font-bold mb-2 block">Date d'obtention</label>
-                <div className="relative">
-                  <Calendar className="absolute left-0 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-                  <input 
-                    type="date"
-                    value={dateObtention}
-                    onChange={(e) => setDateObtention(e.target.value)}
-                    className="w-full bg-transparent border-b-2 border-slate-700 py-3 pl-8 text-lg font-bold text-white focus:border-emerald-500 outline-none transition-colors"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <div>
-                <label className="text-[11px] uppercase tracking-widest text-slate-400 font-bold mb-2 block">Taux TEG (%)</label>
-                <div className="relative">
-                  <Percent className="absolute left-0 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-500" />
-                  <input 
-                    type="number"
-                    step="0.1"
-                    value={taux}
-                    onFocus={(e) => e.target.select()}
-                    onChange={(e) => setTaux(Number(e.target.value))}
-                    className="w-full bg-transparent border-b-2 border-slate-700 py-3 pl-8 text-2xl font-bold text-white focus:border-emerald-500 outline-none transition-colors"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-[11px] uppercase tracking-widest text-slate-400 font-bold mb-2 block">Durée totale (mois)</label>
-                <div className="relative">
-                  <Clock className="absolute left-0 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-                  <input 
-                    type="number"
-                    value={dureeTotale}
-                    onFocus={(e) => e.target.select()}
-                    onChange={(e) => setDureeTotale(Number(e.target.value))}
-                    className="w-full bg-transparent border-b-2 border-slate-700 py-3 pl-8 text-2xl font-bold text-white focus:border-emerald-500 outline-none transition-colors"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            {/* Remboursement PENDANT */}
-            <div className="bg-[#1a2234] p-6 rounded-lg border border-slate-700 space-y-4 transition-all">
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <input 
-                    type="checkbox" 
-                    checked={isPendantEtudes} 
-                    onChange={(e) => {
-                      setIsPendantEtudes(e.target.checked);
-                      if(e.target.checked) setIsDiffere(false);
-                    }}
-                    className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-[#1a2234]"
-                  />
-                  <span className="text-sm font-bold uppercase tracking-wide text-white group-hover:text-emerald-400 transition-colors">Remboursement pendant les études</span>
-                </label>
-                <Clock className={`w-6 h-6 ${isPendantEtudes ? 'text-emerald-500' : 'text-slate-600'}`} />
-              </div>
-              
-              {isPendantEtudes && (
-                <div className="pt-4 border-t border-slate-700/50">
-                  <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-2 block text-pretty">Date de début du remboursement</label>
-                  <div className="relative">
-                    <Calendar className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500" />
-                    <input 
-                      type="date"
-                      value={dateDebutRemboursement}
-                      onChange={(e) => setDateDebutRemboursement(e.target.value)}
-                      className="w-full bg-transparent border-b border-slate-600 py-2 pl-7 text-sm font-bold text-white focus:border-emerald-500 outline-none transition-colors"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Remboursement APRÈS */}
-            <div className="bg-[#1a2234] p-6 rounded-lg border border-slate-700 space-y-4 transition-all">
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <input 
-                    type="checkbox" 
-                    checked={isDiffere} 
-                    onChange={(e) => {
-                      setIsDiffere(e.target.checked);
-                      if(e.target.checked) setIsPendantEtudes(false);
-                    }}
-                    className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-[#1a2234]"
-                  />
-                  <span className="text-sm font-bold uppercase tracking-wide text-white group-hover:text-emerald-400 transition-colors">Remboursement après diplomation</span>
-                </label>
-                <GraduationCap className={`w-6 h-6 ${isDiffere ? 'text-emerald-500' : 'text-slate-600'}`} />
-              </div>
-              
-              {isDiffere && (
-                <div className="pt-4 grid grid-cols-3 gap-2">
-                  {[1, 2, 3].map(an => (
-                    <button 
-                      key={an}
-                      onClick={() => setAnneesEtudes(an)}
-                      className={`py-2 rounded text-xs font-bold transition-all ${anneesEtudes === an ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/20' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
-                    >
-                      DANS {an} AN{an > 1 ? 'S' : ''}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="space-y-6 pt-4 text-pretty">
-            <h3 className="text-[10px] uppercase tracking-[0.3em] text-emerald-500 font-black">Estimation de la rémunération future</h3>
-            <div className="grid grid-cols-2 gap-8">
-              <div>
-                <label className="text-[11px] uppercase tracking-widest text-slate-400 font-bold mb-2 block text-center">Salaire min envisagé</label>
-                <input 
-                  type="number" 
-                  value={salMin} 
-                  onFocus={(e) => e.target.select()}
-                  onChange={(e) => setSalMin(Number(e.target.value))}
-                  className="w-full bg-slate-800/50 border border-slate-700 p-3 rounded text-center text-lg font-bold text-white focus:border-emerald-500 outline-none transition-all"
-                />
-              </div>
-              <div>
-                <label className="text-[11px] uppercase tracking-widest text-slate-400 font-bold mb-2 block text-center">Salaire max envisagé</label>
-                <input 
-                  type="number" 
-                  value={salMax} 
-                  onFocus={(e) => e.target.select()}
-                  onChange={(e) => setSalMax(Number(e.target.value))}
-                  className="w-full bg-slate-800/50 border border-slate-700 p-3 rounded text-center text-lg font-bold text-white focus:border-emerald-500 outline-none transition-all"
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="flex flex-col gap-2">
-                <label className="text-[11px] uppercase tracking-widest text-slate-400 font-bold leading-relaxed">
-                  Quelle part de ton futur salaire estimé comptes-tu consacrer au remboursement mensuel ?
-                </label>
-                <div className="flex justify-between items-end">
-                  <span className="text-[10px] text-slate-500 font-bold">EFFORT FINANCIER CIBLE</span>
-                  <span className="text-emerald-500 font-black text-xl">{ratioEffort}%</span>
-                </div>
-              </div>
-              <input 
-                type="range" 
-                min="5" 
-                max="50" 
-                value={ratioEffort} 
-                onChange={(e) => setRatioEffort(Number(e.target.value))}
-                className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* PANNEAU DE RÉSULTATS (DROITE) */}
-        <div className="w-full md:w-2/5 bg-gradient-to-b from-[#1a2234] to-[#111827] p-8 flex flex-col justify-between relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-            <Briefcase className="w-64 h-64 -mr-20 -mt-20" />
-          </div>
-
-          <div className="relative z-10 space-y-10">
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.2em] text-emerald-500 font-bold mb-2">Mensualité fixe (banque)</p>
-              <div className="text-6xl font-black text-white tracking-tighter">
-                {formatEuro(resultats.mensualite)}
-              </div>
-              <p className="text-xs text-slate-500 mt-2 font-medium">Échéance mensuelle constante</p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4">
-              {/* Capacité Cible */}
-              <div className="p-4 bg-white/5 rounded-lg border border-white/5 space-y-2">
-                <div className="flex items-center gap-3">
-                  <Wallet className="text-slate-400 w-4 h-4" />
-                  <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Ta capacité de remboursement</span>
-                </div>
-                <div className="text-xl font-black text-white">
-                  {formatEuro(resultats.capaciteMin)} <span className="text-slate-500 text-sm font-normal">à</span> {formatEuro(resultats.capaciteMax)}
-                </div>
-              </div>
-
-              {/* Analyse des années - 100% */}
-              <div className="p-4 border-l-2 border-slate-600 bg-white/5 space-y-2">
-                <div className="flex items-center gap-2">
-                  <Target className="w-4 h-4 text-slate-400" />
-                  <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold leading-tight">Coût en années de travail avec 100% du salaire consacré au remboursement</p>
-                </div>
-                <p className="text-2xl font-black text-white tracking-tight">
-                  {resultats.annees100.toFixed(1)} <span className="text-sm">ans</span>
-                </p>
-              </div>
-
-              {/* Analyse des années - Ratio Réel */}
-              <div className="p-4 border-l-2 border-emerald-500 bg-emerald-500/5 space-y-2">
-                <div className="flex items-center gap-2">
-                  <History className="w-4 h-4 text-emerald-500" />
-                  <p className="text-[10px] uppercase tracking-widest text-emerald-500 font-bold leading-tight">Coût en années de travail avec {ratioEffort}% du salaire consacré au remboursement</p>
-                </div>
-                <p className="text-2xl font-black text-white tracking-tight">
-                  {resultats.anneesRatio.toFixed(1)} <span className="text-sm">ans</span>
-                </p>
-                <p className="text-[9px] text-slate-500 leading-tight">C'est la durée réelle de l'effort financier sur ton train de vie.</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="relative z-10 pt-8">
-            <button className="w-full bg-white text-[#0a0e14] py-4 rounded font-black uppercase tracking-widest text-sm hover:bg-emerald-500 transition-all flex items-center justify-center gap-2 group shadow-xl shadow-black/20">
-              Voir le tableau complet
-              <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
-            
-            <div className="mt-4 flex items-start gap-3 bg-blue-900/20 p-4 rounded text-[10px] leading-relaxed text-blue-300/80 border border-blue-900/30 italic">
-              <Info className="w-4 h-4 shrink-0" />
-              Note : La mensualité est fixe selon votre contrat bancaire. Votre capacité de remboursement, elle, fluctue selon votre salaire futur.
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default App;
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
